@@ -1,0 +1,6 @@
+usr/obj
+cmake-build-debug/
+CMakeLists.txt
+.idea
+.vagrant
+*.box
