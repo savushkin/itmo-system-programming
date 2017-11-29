@@ -570,6 +570,12 @@ ufs_setattr(ap)
 			    ((vap->va_flags ^ ip->i_flags) & SF_SETTABLE))
 				return (EPERM);
 		}
+
+		if (vap->va_flags & IMMUTABLE){
+			printf("Permission denied\n");
+			return (EPERM);
+		}
+		
 		ip->i_flags = vap->va_flags;
 		DIP_SET(ip, i_flags, vap->va_flags);
 		ip->i_flag |= IN_CHANGE;
@@ -815,7 +821,7 @@ ufs_chown(vp, uid, gid, cred, td)
 	 * group of which we are not a member, the caller must have
 	 * privilege.
 	 */
-	if (((uid != ip->i_uid && uid != cred->cr_uid) || 
+	if (((uid != ip->i_uid && uid != cred->cr_uid) ||
 	    (gid != ip->i_gid && !groupmember(gid, cred))) &&
 	    (error = priv_check_cred(cred, PRIV_VFS_CHOWN, 0)))
 		return (error);
@@ -1140,7 +1146,7 @@ ufs_rename(ap)
 		goto releout;
 	}
 relock:
-	/* 
+	/*
 	 * We need to acquire 2 to 4 locks depending on whether tvp is NULL
 	 * and fdvp and tdvp are the same directory.  Subsequently we need
 	 * to double-check all paths and in the directory rename case we
@@ -1600,7 +1606,7 @@ ufs_do_posix1e_acl_inheritance_dir(struct vnode *dvp, struct vnode *tvp,
 		DIP_SET(ip, i_mode, dmode);
 		error = 0;
 		goto out;
-	
+
 	default:
 		goto out;
 	}
@@ -1944,7 +1950,7 @@ ufs_mkdir(ap)
 	 * Directory set up, now install its entry in the parent directory.
 	 *
 	 * If we are not doing soft dependencies, then we must write out the
-	 * buffer containing the new directory body before entering the new 
+	 * buffer containing the new directory body before entering the new
 	 * name in the parent. If we are doing soft dependencies, then the
 	 * buffer containing the new directory body will be passed to and
 	 * released in the soft dependency code after the code has attached
@@ -1957,7 +1963,7 @@ ufs_mkdir(ap)
 		goto bad;
 	ufs_makedirentry(ip, cnp, &newdir);
 	error = ufs_direnter(dvp, tvp, &newdir, cnp, bp, 0);
-	
+
 bad:
 	if (error == 0) {
 		*ap->a_vpp = tvp;
