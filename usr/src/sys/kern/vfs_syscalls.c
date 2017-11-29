@@ -3674,6 +3674,15 @@ again:
 		VOP_UNLOCK(fromnd.ni_vp, 0);
 #endif
 	fvp = fromnd.ni_vp;
+
+	char saved_to[strlen(new)];
+	int slashes = 0;
+	if (strcmp(fvp->v_mount->mnt_vfc->vfc_name, "ufs") == 0 && strchr(new, '/') != NULL) {
+		strcpy(saved_to, new);
+		slashes = 1;
+		strcpy(new, "temp");
+	}
+
 	NDINIT_ATRIGHTS(&tond, RENAME, LOCKPARENT | LOCKLEAF | NOCACHE |
 	    SAVESTART | AUDITVNODE2, pathseg, new, newfd,
 	    cap_rights_init(&rights, CAP_LINKAT), td);
@@ -3747,6 +3756,12 @@ again:
 		    tond.ni_vp, fromnd.ni_dvp == tdvp, &tond.ni_cnd);
 #endif
 out:
+
+	if (slashes == 1) {
+		tond.ni_cnd.cn_namelen = strlen(saved_to);
+		strcpy(tond.ni_cnd.cn_pnbuf, saved_to);
+	}
+
 	if (error == 0) {
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 		    tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
